@@ -1,8 +1,9 @@
 # 美西自駕 2026 — 互動遊記地圖 Spec
 
-- **狀態**：待實作
+- **狀態**：已部署上線
 - **建立日期**：2026-08-06
-- **產出網址**：https://ja604041062.github.io/west-usa-2026/
+- **產出網址**：https://west-usa-2026.pages.dev/（原計畫的 GitHub Pages 網址部署失敗未採用，詳見「部署」一節）
+- **程式碼倉庫**：https://github.com/ja604041062/west-usa-2026
 
 ---
 
@@ -18,7 +19,7 @@
 
 ## Solution
 
-一個**純靜態的單頁互動地圖網站**，部署在 GitHub Pages 上，有一個可以分享的網址。
+一個**純靜態的單頁互動地圖網站**，程式碼放在 GitHub、網站託管在 Cloudflare Pages 上，有一個可以分享的網址。
 
 打開網頁就是美西地圖，上面有一條藍色路線標出實際開過的路，路線上有 9 個編號圓圈標記（① 洛杉磯 → ⑨ 舊金山），另有 1 個樣式不同的無編號標記代表不在自駕路線上的景點（Napa Valley）。點任何一個標記，畫面右側滑出面板顯示該地點的照片牆；點面板裡的任一張縮圖，進入全螢幕燈箱看大圖，可左右翻頁。
 
@@ -228,11 +229,14 @@ Napa Valley 在舊金山以北，**不納入路線計算，藍色路線不延伸
 
 ### 部署
 
-- **GitHub Pages**，帳號 `ja604041062`，repo 名 `west-usa-2026`，網址 `https://ja604041062.github.io/west-usa-2026/`。
+- **程式碼託管在 GitHub**（帳號 `ja604041062`，repo `west-usa-2026`），但**網站託管改成 Cloudflare Pages**，網址 `https://west-usa-2026.pages.dev/`。
+  - **原計畫是 GitHub Pages**（`https://ja604041062.github.io/west-usa-2026/`），但實際部署時遇到 GitHub Pages 的建置管線卡住：legacy（Jekyll）流程建置失敗，改用 GitHub Actions 的 workflow 流程後，Actions 執行器一直排在佇列裡超過 15 分鐘沒有被排到、最終被系統取消，判斷是帳號/repo 太新導致的執行器指派延遲。GitHub Pages 設定已停用，避免留下一個打不開的公開網址。
+  - **改用 `wrangler`（Cloudflare 官方 CLI，經 npm 安裝，因此連帶需要安裝 Node.js）以 Direct Upload 方式部署**：不透過 Git 整合（不授權 Cloudflare 存取 GitHub repo），純粹把建置產物（`index.html`、`assets/`、`data/`、`photos/`、`robots.txt`）複製到一個乾淨的暫存資料夾後上傳，避免 `.git/`、`SPEC.md`、`STATUS.md`、`.scratch/` 等內部文件被誤傳到公開網站上。
+  - 每次要更新網站內容，重新執行 `wrangler pages deploy` 上傳同一份乾淨資料夾即可；GitHub repo 仍是程式碼與提交歷史的唯一來源。
 - repo 名使用全小寫英文加連字號 —— 中文 repo 名會使網址變成 percent-encoding 亂碼。
-- **公開網站但加 `noindex`**：於 HTML 加入 robots meta 標籤，並提供 `robots.txt` 阻擋索引。網址不主動散播。
-- **不做密碼保護**。GitHub Pages 免費版技術上無法提供；加密碼也會讓分享變麻煩。已與使用者確認並接受此隱私取捨。
-- 使用者的 `git` 已安裝但**未設定 `user.name` / `user.email`**，且**未安裝 `gh` CLI**。首次部署需包含 git 身份設定與驗證設定步驟。
+- **公開網站但加 `noindex`**：於 HTML 加入 robots meta 標籤，並提供 `robots.txt` 阻擋索引。網址不主動散播。在 Cloudflare Pages 上已實測 `robots.txt` 與 `noindex` meta 皆正常送出。
+- **不做密碼保護**。免費方案技術上無法提供（Cloudflare Pages 的 Access 功能可以做到，但需要另外設定，目前未啟用）；加密碼也會讓分享變麻煩。已與使用者確認並接受此隱私取捨。
+- 使用者的 `git` 原本已安裝但未設定 `user.name` / `user.email`，且未安裝 `gh` CLI ——首次部署時已設定 git 身份（僅限本機 repo 層級，未動全域設定）、以 `winget` 安裝 `gh` CLI 並透過瀏覽器 OAuth 完成 GitHub 登入；同樣以 `winget` 安裝 Node.js 供 `wrangler` 使用，並透過瀏覽器 OAuth 完成 Cloudflare 登入。全程未要求使用者提供密碼或 token 給實作者。
 
 ### 目標裝置
 

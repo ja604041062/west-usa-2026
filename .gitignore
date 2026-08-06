@@ -20,3 +20,6 @@ _unsorted/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Cloudflare wrangler 本機快取（帳號 ID、專案設定，不是密鑰，但也不必進版控）
+.wrangler/
