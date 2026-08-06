@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh api *)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl -sL https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grilling/SKILL.md)",
+      "Bash(curl -sL https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grill-me/SKILL.md)",
+      "Bash(curl -sL https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grill-me/agents/openai.yaml)",
+      "Bash(curl -sL https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grilling/agents/openai.yaml)",
+      "Bash(mkdir -p \".claude/skills/grill-me/agents\" \".claude/skills/grilling/agents\")",
+      "Bash(curl -sL https://api.github.com/repos/mattpocock/skills/git/trees/main?recursive=1)",
+      "Bash(mkdir -p \".claude/skills/to-spec/agents\" \".claude/skills/to-tickets/agents\" \".claude/skills/implement/agents\" \".claude/skills/code-review/agents\")",
+      "Bash(curl -sL https://raw.githubusercontent.com/mattpocock/skills/main/skills/engineering/tdd/SKILL.md)",
+      "Bash(curl -sL https://raw.githubusercontent.com/mattpocock/skills/main/skills/engineering/tdd/agents/openai.yaml)",
+      "Bash(curl -sL https://raw.githubusercontent.com/mattpocock/skills/main/skills/engineering/tdd/mocking.md)",
+      "Bash(curl -sL https://raw.githubusercontent.com/mattpocock/skills/main/skills/engineering/tdd/tests.md)",
+      "Bash(mkdir -p \".claude/skills/tdd/agents\")",
+      "Bash(mv \".claude/skills/code-review\" \".claude/skills/mp-code-review\" *)",
+      "Bash(ls -la \"C:/Users/liuwe/OneDrive/桌面/\" 2>/dev/null | head -40; echo \"--- pictures/screenshots ---\"; ls -la \"C:/Users/liuwe/OneDrive/圖片/螢幕擷取畫面\" 2>/dev/null | head -20; ls -la \"C:/Users/liuwe/Pictures/Screenshots\" 2>/dev/null | head -20)",
+      "Bash(find \"C:/Users/liuwe\" -maxdepth 5 -name \"*2026-08-05*\" -not -path \"*/AppData/*\" 2>/dev/null | head -20)",
+      "Bash(python -c ' *)",
+      "PowerShell(python --version)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\"C:\\\\Users\\\\liuwe\\\\OneDrive\\\\桌面\\\\Soap美西\\\\DSC03976.JPG\"\\); Write-Output \\(\"Size: \" + $img.Width + \"x\" + $img.Height\\); $ids = $img.PropertyIdList; Write-Output \\(\"GPS tags present: \" + \\(\\($ids | Where-Object { $_ -ge 1 -and $_ -le 31 }\\).Count\\)\\); Write-Output \\(\"Total EXIF tags: \" + $ids.Count\\); $img.Dispose\\(\\))",
+      "Bash(gh auth *)",
+      "Bash(git config *)",
+      "Bash(mkdir -p assets/css assets/js assets/vendor/leaflet/images data scripts photos)",
+      "Bash(git init *)",
+      "Bash(curl -sL -o assets/vendor/leaflet/leaflet.js https://unpkg.com/leaflet@1.9.4/dist/leaflet.js)",
+      "Bash(curl -sL -o assets/vendor/leaflet/leaflet.css https://unpkg.com/leaflet@1.9.4/dist/leaflet.css)",
+      "PowerShell(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\liuwe\\\\OneDrive\\\\桌面\\\\美西互動網頁\\\\scripts\\\\verify.ps1\")",
+      "PowerShell($p = \"C:\\\\Users\\\\liuwe\\\\OneDrive\\\\桌面\\\\美西互動網頁\\\\scripts\\\\verify.ps1\"; $text = [System.IO.File]::ReadAllText\\($p, [System.Text.UTF8Encoding]::new\\($false\\)\\); [System.IO.File]::WriteAllText\\($p, $text, [System.Text.UTF8Encoding]::new\\($true\\)\\); Write-Output \"BOM added, bytes: $\\(\\(Get-Item $p\\).Length\\)\")",
+      "PowerShell(try { $l = New-Object System.Net.HttpListener; $l.Prefixes.Add\\(\"http://localhost:8765/\"\\); $l.Start\\(\\); Write-Output \"HttpListener OK\"; $l.Stop\\(\\); $l.Close\\(\\) } catch { Write-Output \"HttpListener FAILED: $\\($_.Exception.Message\\)\" })",
+      "PowerShell($p = \"C:\\\\Users\\\\liuwe\\\\OneDrive\\\\桌面\\\\美西互動網頁\\\\scripts\\\\serve.ps1\"; $t = [System.IO.File]::ReadAllText\\($p, [System.Text.UTF8Encoding]::new\\($false\\)\\); [System.IO.File]::WriteAllText\\($p, $t, [System.Text.UTF8Encoding]::new\\($true\\)\\); New-Item -ItemType Directory -Force \"C:\\\\Users\\\\liuwe\\\\OneDrive\\\\桌面\\\\美西互動網頁\\\\.claude\" | Out-Null; Write-Output \"ok\")",
+      "Bash(git add *)",
+      "Bash(git commit -q -m ' *)"
+    ]
+  }
+}

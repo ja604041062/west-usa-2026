@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- 這是一個私人的家庭遊記網站。技術上公開，但不希望被搜尋引擎收錄。 -->
+  <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+
+  <title>美西自駕 2026</title>
+
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <h1 class="site-title">美西自駕 2026</h1>
+    <p class="site-subtitle">6/13 – 6/19 · 1,704 miles</p>
+  </header>
+
+  <div id="map"></div>
+
+  <!-- 資料檔以 <script> 載入而非 fetch()，這樣直接雙擊 index.html 也能運作 -->
+  <script src="assets/vendor/leaflet/leaflet.js"></script>
+  <script src="data/points.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

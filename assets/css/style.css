@@ -1,0 +1,149 @@
+/* ==========================================================================
+   美西自駕 2026 —— 樣式
+   本階段只做桌機版面。刻意不使用固定像素寬度的版面、不讓必要功能只靠
+   hover 觸發，讓日後補上手機版時不需要重寫。
+   ========================================================================== */
+
+:root {
+  /* 自駕路線的主色。路線折線與編號標記共用同一個藍，讓「這是一條路線」
+     這件事在視覺上自我說明。 */
+  --route-blue: #2563eb;
+  --route-blue-dark: #1d4ed8;
+
+  /* 路線外景點的顏色。刻意選了色相環上離藍色很遠的琥珀色，
+     讓人不需要圖例就知道它不屬於編號序列。 */
+  --offroute-amber: #d97706;
+  --offroute-amber-dark: #b45309;
+
+  --ink: #1f2937;
+  --ink-soft: #6b7280;
+  --paper: #ffffff;
+
+  --shadow-marker: 0 1px 4px rgba(0, 0, 0, .4);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;              /* 地圖佔滿視窗，頁面本身永不捲動 */
+  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+  color: var(--ink);
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+  background: #eaeaea;           /* 圖磚載入前的底色，避免白閃 */
+}
+
+/* --------------------------------------------------------------- 網站識別 */
+
+.site-header {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  z-index: 500;                  /* Leaflet 控制項是 1000，這裡刻意壓在下面 */
+  margin: 0;
+  padding: .75rem 1.25rem;
+  background: rgba(255, 255, 255, .92);
+  border-radius: .5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .12);
+  pointer-events: none;          /* 標題不該擋住底下的地圖操作 */
+}
+
+.site-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.site-subtitle {
+  margin: .25rem 0 0;
+  font-size: .875rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----------------------------------------------------------------- 標記 */
+
+/* divIcon 預設會帶白底和邊框，先清掉 */
+.trip-marker {
+  background: none;
+  border: none;
+}
+
+.trip-marker__dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: .8125rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 2px solid #fff;
+  box-shadow: var(--shadow-marker);
+  cursor: pointer;
+  transition: transform .12s ease;
+}
+
+.trip-marker__dot:hover {
+  transform: scale(1.15);
+}
+
+/* 自駕路線上的編號停留點 */
+.trip-marker--stop .trip-marker__dot {
+  background: var(--route-blue);
+}
+
+/* 路線外景點：不同顏色、沒有數字，改用一個小圓點填充 */
+.trip-marker--offroute .trip-marker__dot {
+  background: var(--offroute-amber);
+  /* 尺寸略小，進一步和編號標記區隔 */
+  width: 22px;
+  height: 22px;
+}
+
+.trip-marker--offroute .trip-marker__dot::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* 地名標籤 —— 用 Leaflet 的 permanent tooltip 呈現
+   標籤永遠畫在標記「底下」。在美西全景的縮放層級下，10 個中文標籤一定會
+   互相重疊；重疊的標籤只是不好看，但被標籤蓋住的標記是點不到的，
+   所以寧可讓標籤被壓住，也不能讓標記消失。 */
+.leaflet-tooltip-pane {
+  z-index: 590;                  /* marker pane 是 600 */
+}
+
+.leaflet-tooltip.trip-label {
+  background: rgba(255, 255, 255, .82);
+  border: none;
+  border-radius: .25rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .15);
+  padding: .0625rem .35rem;
+  font-size: .6875rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;          /* 標籤絕不攔截點擊，點擊永遠落在標記上 */
+}
+
+.leaflet-tooltip.trip-label::before {
+  display: none;                 /* 不要小箭頭，太吵 */
+}
+
+.leaflet-tooltip.trip-label--offroute {
+  color: var(--offroute-amber-dark);
+  background: rgba(255, 251, 235, .88);
+}

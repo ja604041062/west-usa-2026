@@ -1,0 +1,22 @@
+# 原始大圖絕對不進版控 —— 108 張、926MB。
+# 來源照片放在專案外的 桌面/Soap美西/，這裡再明列一次以防有人把它複製進來。
+Soap美西/
+photos-src/
+_unsorted/
+**/_unsorted/
+
+# 相機原始檔
+*.ARW
+*.CR2
+*.NEF
+*.dng
+
+# 工作用檔案
+.scratch/
+螢幕擷取畫面*.png
+新增 文字文件.txt
+
+# 系統檔
+Thumbs.db
+desktop.ini
+.DS_Store
