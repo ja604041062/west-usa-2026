@@ -238,6 +238,89 @@ html, body {
   border-radius: .25rem;
   background: #eee;              /* 載入前的佔位色 */
   object-fit: cover;
+  cursor: pointer;
   /* aspect-ratio 在圖片載入前就先保留版面空間，避免縮圖陸續到位時
      整個照片牆的排版跳動。 */
+}
+
+/* ---------------------------------------------------------------- 燈箱 */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 900;                  /* 蓋過面板（800）與地圖上的一切 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .92);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+
+.lightbox.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lightbox__image {
+  /* 完整顯示在視窗內，不裁切、不需捲動 —— 用 max-width/max-height
+     而不是固定尺寸，圖片保持原始長寬比自然縮放。 */
+  max-width: 90vw;
+  max-height: 86vh;
+  object-fit: contain;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, .5);
+}
+
+.lightbox__close,
+.lightbox__nav {
+  position: absolute;
+  border: none;
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.lightbox__close:hover,
+.lightbox__nav:hover {
+  background: rgba(255, 255, 255, .24);
+}
+
+.lightbox__close {
+  top: 1rem;
+  right: 1rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  font-size: 1.5rem;
+}
+
+.lightbox__nav {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  font-size: 2rem;
+}
+
+.lightbox__nav--prev { left: 1rem; }
+.lightbox__nav--next { right: 1rem; }
+
+.lightbox__counter {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: .25rem .75rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+  font-size: .8125rem;
+  font-variant-numeric: tabular-nums;
 }

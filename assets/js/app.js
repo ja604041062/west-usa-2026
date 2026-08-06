@@ -122,6 +122,11 @@
     panelGridEl.innerHTML = '';
     var photos = (window.TRIP_PHOTOS && window.TRIP_PHOTOS[pointId]) || [];
 
+    // 燈箱要能在同一個地點的照片之間左右翻頁，所以把這個地點目前的
+    // 照片清單記在面板層級 —— 點哪張縮圖，燈箱就從哪個 index 開始。
+    lightboxPhotos = photos;
+    lightboxPointName = pointName;
+
     photos.forEach(function (photo, index) {
       var img = document.createElement('img');
       img.className = 'panel__thumb';
@@ -131,6 +136,7 @@
       // 縮圖還沒載入前就先用原始尺寸的長寬比佔好版面空間，
       // 照片陸續進來時面板不會跳動。
       img.style.aspectRatio = photo.w + ' / ' + photo.h;
+      img.addEventListener('click', function () { openLightbox(index); });
       panelGridEl.appendChild(img);
     });
   }
@@ -151,6 +157,67 @@
 
   panelCloseBtn.addEventListener('click', closePanel);
 
+  // ---------------------------------------------------------------- 燈箱
+
+  // 面板負責「這個地點有哪些照片」的概覽（縮圖），燈箱負責「這一張長
+  // 什麼樣」的細看（大圖）。大圖只在真的點開某一張時才載入。
+  var lightboxEl = document.getElementById('lightbox');
+  var lightboxImg = lightboxEl.querySelector('.lightbox__image');
+  var lightboxCounter = lightboxEl.querySelector('.lightbox__counter');
+  var lightboxCloseBtn = lightboxEl.querySelector('.lightbox__close');
+  var lightboxPrevBtn = lightboxEl.querySelector('.lightbox__nav--prev');
+  var lightboxNextBtn = lightboxEl.querySelector('.lightbox__nav--next');
+
+  var lightboxPhotos = [];
+  var lightboxPointName = '';
+  var lightboxIndex = 0;
+
+  function renderLightboxImage() {
+    var photo = lightboxPhotos[lightboxIndex];
+    lightboxImg.src = photo.large;
+    lightboxImg.alt = lightboxPointName + ' 照片 ' + (lightboxIndex + 1);
+    lightboxCounter.textContent = (lightboxIndex + 1) + ' / ' + lightboxPhotos.length;
+  }
+
+  function openLightbox(index) {
+    lightboxIndex = index;
+    renderLightboxImage();
+    lightboxEl.classList.add('is-open');
+  }
+
+  function closeLightbox() {
+    lightboxEl.classList.remove('is-open');
+  }
+
+  // 首張往前、末張往後都直接繞到另一端，而不是停在原地或讓按鈕失效 ——
+  // 使用者連續按下一張時最不會撞到邊界的行為。
+  function showPrevPhoto() {
+    lightboxIndex = (lightboxIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length;
+    renderLightboxImage();
+  }
+
+  function showNextPhoto() {
+    lightboxIndex = (lightboxIndex + 1) % lightboxPhotos.length;
+    renderLightboxImage();
+  }
+
+  lightboxCloseBtn.addEventListener('click', closeLightbox);
+  lightboxPrevBtn.addEventListener('click', showPrevPhoto);
+  lightboxNextBtn.addEventListener('click', showNextPhoto);
+
+  // 點暗色遮罩本身（不是圖片或按鈕）才關閉 —— e.target 只有在點擊落在
+  // 遮罩自己身上時才會等於 lightboxEl，點在子元素上一律不觸發。
+  lightboxEl.addEventListener('click', function (e) {
+    if (e.target === lightboxEl) closeLightbox();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (!lightboxEl.classList.contains('is-open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowLeft') showPrevPhoto();
+    else if (e.key === 'ArrowRight') showNextPhoto();
+  });
+
   // ------------------------------------------------------------ 初始視野
 
   // 框住所有「看得到的」標記，含不在路線上的 Napa Valley。
@@ -167,6 +234,8 @@
     markers: markers,
     basemaps: basemaps,
     openPanel: openPanel,
-    closePanel: closePanel
+    closePanel: closePanel,
+    openLightbox: openLightbox,
+    closeLightbox: closeLightbox
   };
 })();
