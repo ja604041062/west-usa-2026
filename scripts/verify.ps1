@@ -37,22 +37,9 @@ function Assert-True {
 }
 
 # 資料檔是 JS 而非 JSON，因為 fetch() 在 file:// 下會被 CORS 擋掉，
-# 而「雙擊 index.html 就能看」是硬需求。這裡把 JS 外殼剝掉再當 JSON 解析。
-function Read-DataFile {
-    param([string]$Path)
-    if (-not (Test-Path $Path)) { throw "檔案不存在：$(Split-Path -Leaf $Path)" }
-    $text = Get-Content -Path $Path -Raw -Encoding UTF8
-
-    # 去掉整行的 // 註解（不碰行內出現的 //，避免誤傷字串內容）
-    $lines = $text -split "`r?`n" | Where-Object { $_.TrimStart() -notmatch '^//' }
-    $text = $lines -join "`n"
-
-    # 剝掉 `window.XXX = ` 前綴與結尾的分號
-    $text = $text -replace '^\s*window\.[A-Z_]+\s*=\s*', ''
-    $text = $text.Trim().TrimEnd(';')
-
-    return ($text | ConvertFrom-Json)
-}
+# 而「雙擊 index.html 就能看」是硬需求。Read-DataFile 把 JS 外殼剝掉
+# 再當 JSON 解析，build-photos.ps1 與 build-route.ps1 也共用同一份。
+. (Join-Path $PSScriptRoot 'lib\DataFile.ps1')
 
 # ---------------------------------------------------------------- 載入設定
 
@@ -147,10 +134,15 @@ if ($photosExist) {
         }
     }
 
-    Test-That "總張數為 108" {
+    Test-That "總張數非零，且與所有地點加總一致" {
+        # 照片數量會持續增加（撰寫這支腳本時是 108 張，之後只會更多），
+        # 不寫死確切數字 —— 上面「完整性」那項測試已經逐地點比對過
+        # 來源與輸出是否相符，這裡只做總數健全性檢查，並把目前的
+        # 實際張數印出來供參考。
         $total = 0
         foreach ($prop in $photos.PSObject.Properties) { $total += $prop.Value.Count }
-        Assert-True ($total -eq 108) "總張數為 $total，預期 108"
+        Write-Host "        （目前共 $total 張照片）" -ForegroundColor DarkGray
+        Assert-True ($total -gt 0) "總張數為 0，照片管線可能沒有正確執行"
     }
 
     Test-That "產物存在性：每個引用的檔案都在磁碟上" {

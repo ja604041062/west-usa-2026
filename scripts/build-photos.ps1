@@ -18,16 +18,7 @@ Add-Type -AssemblyName System.Drawing
 
 $root = Split-Path -Parent $PSScriptRoot
 
-function Read-DataFile {
-    param([string]$Path)
-    if (-not (Test-Path $Path)) { throw "檔案不存在：$Path" }
-    $text = Get-Content -Path $Path -Raw -Encoding UTF8
-    $lines = $text -split "`r?`n" | Where-Object { $_.TrimStart() -notmatch '^//' }
-    $text = $lines -join "`n"
-    $text = $text -replace '^\s*window\.[A-Z_]+\s*=\s*', ''
-    $text = $text.Trim().TrimEnd(';')
-    return ($text | ConvertFrom-Json)
-}
+. (Join-Path $PSScriptRoot 'lib\DataFile.ps1')
 
 # EXIF 方向標記（tag 274）—— 相機直拍的照片會帶這個標記，System.Drawing
 # 不會自動轉正，不處理的話直拍照片在網頁上會整個躺平。
