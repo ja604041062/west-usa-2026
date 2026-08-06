@@ -87,10 +87,69 @@
       className: 'trip-label' + (point.inRoute ? '' : ' trip-label--offroute')
     });
 
+    marker.on('click', function () { openPanel(point); });
+
     marker.addTo(map);
     marker.tripPoint = point;
     markers.push(marker);
   });
+
+  // ---------------------------------------------------------------- 面板
+
+  // 點任一標記（含不在自駕路線上的 Napa Valley）都走這條路徑，
+  // 內容呈現上完全一視同仁 —— 路線上的特殊地位不代表照片瀏覽上的特殊地位。
+  var panelEl = document.getElementById('panel');
+  var panelTitleEl = panelEl.querySelector('.panel__title');
+  var panelDateEl = panelEl.querySelector('.panel__date');
+  var panelDescEl = panelEl.querySelector('.panel__description');
+  var panelGridEl = panelEl.querySelector('.panel__grid');
+  var panelScrollEl = panelEl.querySelector('.panel__scroll');
+  var panelCloseBtn = panelEl.querySelector('.panel__close');
+
+  // 文字欄位為空時整個隱藏，而不是留一段空白 —— 現階段所有 description
+  // 都是空的，這條路徑要能撐住「純照片牆」的樣子。
+  function setOptionalText(el, text) {
+    if (text) {
+      el.hidden = false;
+      el.textContent = text;
+    } else {
+      el.hidden = true;
+      el.textContent = '';
+    }
+  }
+
+  function renderPhotoGrid(pointId, pointName) {
+    panelGridEl.innerHTML = '';
+    var photos = (window.TRIP_PHOTOS && window.TRIP_PHOTOS[pointId]) || [];
+
+    photos.forEach(function (photo, index) {
+      var img = document.createElement('img');
+      img.className = 'panel__thumb';
+      img.src = photo.thumb;
+      img.alt = pointName + ' 照片 ' + (index + 1);
+      img.loading = 'lazy';
+      // 縮圖還沒載入前就先用原始尺寸的長寬比佔好版面空間，
+      // 照片陸續進來時面板不會跳動。
+      img.style.aspectRatio = photo.w + ' / ' + photo.h;
+      panelGridEl.appendChild(img);
+    });
+  }
+
+  function openPanel(point) {
+    panelTitleEl.textContent = point.name;
+    setOptionalText(panelDateEl, point.date);
+    setOptionalText(panelDescEl, point.description);
+    renderPhotoGrid(point.id, point.name);
+
+    panelScrollEl.scrollTop = 0;
+    panelEl.classList.add('is-open');
+  }
+
+  function closePanel() {
+    panelEl.classList.remove('is-open');
+  }
+
+  panelCloseBtn.addEventListener('click', closePanel);
 
   // ------------------------------------------------------------ 初始視野
 
@@ -106,6 +165,8 @@
   window.TRIP_APP = {
     map: map,
     markers: markers,
-    basemaps: basemaps
+    basemaps: basemaps,
+    openPanel: openPanel,
+    closePanel: closePanel
   };
 })();
