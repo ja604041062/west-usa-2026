@@ -249,9 +249,12 @@
 
   // 左上角有網站標題 + 底圖切換鈕這塊常駐 UI，用對稱 padding 算出來的
   // 縮放層級會讓角落的標記（目前是 Napa Valley）被這塊 UI 蓋住。
-  // 左上角多留一點空間，右下角維持原本的量就好。
+  // 數值對應標題區塊實際量到的尺寸（約 225×143px）加一點緩衝，
+  // 不是憑感覺試出來的數字 —— 這樣視窗尺寸改變、標題內容改變時，
+  // 這組數字還站得住腳。右下角沒有常駐 UI，維持一般的留白量即可。
+  var headerRect = document.querySelector('.site-header').getBoundingClientRect();
   map.fitBounds(bounds, {
-    paddingTopLeft: [180, 170],
+    paddingTopLeft: [headerRect.right + 15, headerRect.bottom + 15],
     paddingBottomRight: [70, 70]
   });
 
