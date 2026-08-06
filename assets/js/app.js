@@ -28,12 +28,33 @@
   };
 
   var map = L.map('map', {
-    // 縮放控制項移到左下角，把左上角讓給網站標題，右上角讓給底圖切換鈕
+    // 縮放控制項移到左下角，左上角留給網站標題（底圖切換鈕也做在標題
+    // 那個區塊裡 —— 右上角會被面板打開時蓋住，不適合放常駐控制項）
     zoomControl: false,
     layers: [basemaps.light]
   });
 
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+  // 底圖切換：純粹換圖層，從不呼叫 setView，中心點與縮放層級
+  // 自然不會被動到，不需要額外記錄或還原視野。
+  var basemapButtons = document.querySelectorAll('.basemap-toggle__btn');
+  var activeBasemapKey = 'light';
+
+  basemapButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.dataset.basemap;
+      if (key === activeBasemapKey) return;
+
+      map.removeLayer(basemaps[activeBasemapKey]);
+      map.addLayer(basemaps[key]);
+      activeBasemapKey = key;
+
+      basemapButtons.forEach(function (b) {
+        b.classList.toggle('is-active', b === btn);
+      });
+    });
+  });
 
   // ---------------------------------------------------------------- 路線
 
@@ -226,7 +247,13 @@
           .map(function (p) { return p.coords; })
   );
 
-  map.fitBounds(bounds, { padding: [70, 70] });
+  // 左上角有網站標題 + 底圖切換鈕這塊常駐 UI，用對稱 padding 算出來的
+  // 縮放層級會讓角落的標記（目前是 Napa Valley）被這塊 UI 蓋住。
+  // 左上角多留一點空間，右下角維持原本的量就好。
+  map.fitBounds(bounds, {
+    paddingTopLeft: [180, 170],
+    paddingBottomRight: [70, 70]
+  });
 
   // 暴露給後續票使用
   window.TRIP_APP = {
