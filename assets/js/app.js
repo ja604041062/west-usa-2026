@@ -35,6 +35,19 @@
 
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
+  // ---------------------------------------------------------------- 路線
+
+  // 由 scripts/build-route.ps1 產生，只涵蓋 inRoute: true 的地點
+  // （Napa Valley 不在其中 —— 自駕主軸不延伸過去）。
+  if (window.TRIP_ROUTE) {
+    L.polyline(window.TRIP_ROUTE.coordinates, {
+      color: '#2563eb',
+      weight: 4,
+      opacity: 0.85,
+      lineJoin: 'round'
+    }).addTo(map);
+  }
+
   // ---------------------------------------------------------------- 標記
 
   // 編號只給「在自駕路線上且顯示標記」的地點。路線外的景點（Napa Valley）

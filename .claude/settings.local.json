@@ -36,7 +36,10 @@
       "PowerShell(try { $l = New-Object System.Net.HttpListener; $l.Prefixes.Add\\(\"http://localhost:8765/\"\\); $l.Start\\(\\); Write-Output \"HttpListener OK\"; $l.Stop\\(\\); $l.Close\\(\\) } catch { Write-Output \"HttpListener FAILED: $\\($_.Exception.Message\\)\" })",
       "PowerShell($p = \"C:\\\\Users\\\\liuwe\\\\OneDrive\\\\桌面\\\\美西互動網頁\\\\scripts\\\\serve.ps1\"; $t = [System.IO.File]::ReadAllText\\($p, [System.Text.UTF8Encoding]::new\\($false\\)\\); [System.IO.File]::WriteAllText\\($p, $t, [System.Text.UTF8Encoding]::new\\($true\\)\\); New-Item -ItemType Directory -Force \"C:\\\\Users\\\\liuwe\\\\OneDrive\\\\桌面\\\\美西互動網頁\\\\.claude\" | Out-Null; Write-Output \"ok\")",
       "Bash(git add *)",
-      "Bash(git commit -q -m ' *)"
+      "Bash(git commit -q -m ' *)",
+      "Bash(curl -s --max-time 15 \"https://router.project-osrm.org/route/v1/driving/-118.2437,34.0522;-115.9010,33.8734?overview=false\")",
+      "PowerShell($p = \"C:\\\\Users\\\\liuwe\\\\OneDrive\\\\桌面\\\\美西互動網頁\\\\scripts\\\\build-route.ps1\"; $t = [System.IO.File]::ReadAllText\\($p, [System.Text.UTF8Encoding]::new\\($false\\)\\); [System.IO.File]::WriteAllText\\($p, $t, [System.Text.UTF8Encoding]::new\\($true\\)\\); Write-Output \"BOM added\")",
+      "PowerShell(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\liuwe\\\\OneDrive\\\\桌面\\\\美西互動網頁\\\\scripts\\\\build-route.ps1\")"
     ]
   }
 }
