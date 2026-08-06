@@ -67,6 +67,18 @@ window.TRIP_POINTS = {
       "inRoute": true
     },
     {
+      // 途經點：實際行程是馬蹄灣/羚羊谷折返回大峽谷，再前往拉斯維加斯，
+      // 不是從 Page 直接西行。不顯示標記 —— 大峽谷的標記已經在上面出現過了。
+      "id": "grand-canyon-return",
+      "srcFolder": null,
+      "name": "大峽谷（返程）",
+      "coords": [36.0544, -112.1401],
+      "date": "",
+      "description": "",
+      "showMarker": false,
+      "inRoute": true
+    },
+    {
       "id": "las-vegas",
       "srcFolder": "5.Las Vegas",
       "name": "拉斯維加斯",
