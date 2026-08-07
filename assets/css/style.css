@@ -110,10 +110,19 @@ html, body {
 
 /* ----------------------------------------------------------------- 標記 */
 
-/* divIcon 預設會帶白底和邊框，先清掉 */
+/* divIcon 預設會帶白底和邊框，先清掉。transition 是給開場動畫用的——
+   標記預設是「待命」狀態（見 .trip-marker--pending），動畫依路線進度
+   逐一移除這個 class，讓標記淡入＋放大彈出。 */
 .trip-marker {
   background: none;
   border: none;
+  transform-origin: center;
+  transition: opacity .3s ease, transform .3s ease;
+}
+
+.trip-marker--pending {
+  opacity: 0;
+  transform: scale(.4);
 }
 
 .trip-marker__dot {
@@ -363,4 +372,92 @@ html, body {
   color: #fff;
   font-size: .8125rem;
   font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ 開場封面 */
+
+/* 每次打開網站都會先看到這個。z-index 刻意比 Leaflet 自己的控制項
+   （zoom control 等，約 1000）還高，蓋過畫面上的一切。用 clamp() 讓
+   文字與按鈕隨螢幕寬度縮放，不用另外寫手機斷點的媒體查詢——這是封面
+   唯一需要顧手機的地方，地圖本體仍是桌機限定，不受影響。 */
+.cover {
+  /* absolute 而非 fixed —— 跟網站其他覆蓋層（.site-header、.panel）
+     維持同一種寫法：body/html 本來就 100% 撐滿視窗且不捲動，兩者在
+     這裡等價，但 absolute 是這個專案一貫的選擇。 */
+  position: absolute;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  /* 深色遮罩疊在照片上，確保標題在天空最亮處、岩壁最暗處都一樣好讀，
+     不用靠文字陰影硬撐。 */
+  background-image: linear-gradient(rgba(0, 0, 0, .38), rgba(0, 0, 0, .38)),
+                     url('../../photos/horseshoe-bend/large/DSC04172.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 1;
+  transition: opacity .35s ease;
+}
+
+.cover.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cover[hidden] {
+  display: none;
+}
+
+.cover__content {
+  max-width: 90vw;
+}
+
+.cover__title {
+  margin: 0 0 1.75rem;
+  color: #fff;
+  font-size: clamp(1.75rem, 6vw, 3rem);
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, .45);
+}
+
+.cover__start {
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: clamp(1rem, 2.5vw, 1.125rem);
+  font-weight: 700;
+  padding: .8125rem 2.5rem;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .3);
+  transition: transform .15s ease;
+}
+
+.cover__start:hover {
+  transform: scale(1.04);
+}
+
+/* --------------------------------------------------------- 路線動畫提示 */
+
+.route-skip-hint {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 950;                  /* 高於燈箱／面板，但不用蓋過封面 */
+  margin: 0;
+  padding: .4375rem 1.125rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .55);
+  color: #fff;
+  font-size: .8125rem;
+  pointer-events: none;          /* 提示文字本身不擋點擊，跳過靠點畫面任一處 */
+}
+
+.route-skip-hint[hidden] {
+  display: none;
 }

@@ -60,13 +60,36 @@
 
   // 由 scripts/build-route.ps1 產生，只涵蓋 inRoute: true 的地點
   // （Napa Valley 不在其中 —— 自駕主軸不延伸過去）。
-  if (window.TRIP_ROUTE) {
-    L.polyline(window.TRIP_ROUTE.coordinates, {
-      color: '#2563eb',
-      weight: 4,
-      opacity: 0.85,
-      lineJoin: 'round'
-    }).addTo(map);
+  //
+  // 路線一開始不畫滿 —— 開場封面的轉場動畫要把它從空座標逐步畫到完整，
+  // 所以這裡只建立圖層本身，實際座標由下方「開場封面與轉場動畫」那節
+  // 的 setRouteProgress() 填入。
+  var routeCoordsFull = (window.TRIP_ROUTE && window.TRIP_ROUTE.coordinates) || [];
+  var routeLine = routeCoordsFull.length
+    ? L.polyline([], {
+        color: '#2563eb',
+        weight: 4,
+        opacity: 0.85,
+        lineJoin: 'round'
+      }).addTo(map)
+    : null;
+
+  // 找出 latlng 在路線座標序列中最接近的一點，回傳它在整條路線的進度
+  // （0 = 起點 LA，1 = 終點 SF）。給不在路線上的標記（Napa Valley）用
+  // 同一套邏輯也能得到一個合理的彈出時機，不需要特殊處理。
+  function nearestRouteProgress(coords, latlng) {
+    var bestIndex = 0;
+    var bestDist = Infinity;
+    for (var i = 0; i < coords.length; i++) {
+      var dLat = coords[i][0] - latlng[0];
+      var dLng = coords[i][1] - latlng[1];
+      var dist = dLat * dLat + dLng * dLng;
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIndex = i;
+      }
+    }
+    return coords.length > 1 ? bestIndex / (coords.length - 1) : 0;
   }
 
   // ---------------------------------------------------------------- 標記
@@ -112,6 +135,16 @@
 
     marker.addTo(map);
     marker.tripPoint = point;
+
+    // 開場動畫要讓標記依路線進度依序彈出，這裡先算好每個標記的彈出時機
+    // （0 = 起點附近，1 = 終點附近）。實際加上「待命」樣式要等 fitBounds
+    // 設定好地圖視野之後——Leaflet 把 addLayer 的 onAdd／icon 建立動作
+    // 延到 map.whenReady()，此時地圖還沒有視野、icon 元素還沒真的生出來，
+    // 這裡呼叫 marker.getElement() 一定拿到 null。
+    marker._revealAt = routeCoordsFull.length
+      ? nearestRouteProgress(routeCoordsFull, point.coords)
+      : 0;
+
     markers.push(marker);
   });
 
@@ -256,6 +289,95 @@
   map.fitBounds(bounds, {
     paddingTopLeft: [headerRect.right + 15, headerRect.bottom + 15],
     paddingBottomRight: [70, 70]
+  });
+
+  // ---------------------------------------------------------- 開場封面與轉場動畫
+
+  // 封面每次打開網站都會出現（不記錄「看過了」的狀態），地圖在封面顯示
+  // 的同時就已經在背景初始化完成（上面所有程式碼都不是等封面關閉才
+  // 執行的）——點「開始」時要做的只是把封面淡出、接上路線動畫。
+  var coverEl = document.getElementById('cover');
+  var coverStartBtn = coverEl.querySelector('.cover__start');
+  var skipHintEl = document.getElementById('route-skip-hint');
+
+  var ROUTE_ANIMATION_MS = 4500; // 封面淡出另計約 350ms，合計約 5 秒
+  var animationFrameId = null;
+  var animationActive = false;
+
+  // 地圖視野（fitBounds）已經在上面設定完成，這裡地圖已經是 _loaded 狀態，
+  // 每個標記的 icon 元素才真的存在，這時加上「待命」樣式才有效。
+  markers.forEach(function (marker) {
+    var el = marker.getElement();
+    if (el) L.DomUtil.addClass(el, 'trip-marker--pending');
+  });
+
+  function setRouteProgress(t) {
+    if (routeLine) {
+      var count = Math.max(2, Math.round(routeCoordsFull.length * t));
+      routeLine.setLatLngs(routeCoordsFull.slice(0, count));
+    }
+    markers.forEach(function (marker) {
+      if (t < marker._revealAt) return;
+      var el = marker.getElement();
+      if (el) L.DomUtil.removeClass(el, 'trip-marker--pending');
+    });
+  }
+
+  function onSkipKeydown(e) {
+    if (e.key === 'Escape') finishRouteAnimation();
+  }
+
+  // 逃生閥：動畫播放中點擊畫面任一處或按 Esc 直接跳到最終狀態。這是
+  // 必要功能，不是錦上添花——訪客可能在車上用手機重複點開連結，被迫
+  // 每次看完整段動畫會是最容易被抱怨的地方。
+  //
+  // finishRouteAnimation 本身不吃參數，click 事件物件直接傳進來也無妨，
+  // 所以拿它自己當 click 監聽器用，不用再包一層轉發用的函式。
+  function finishRouteAnimation() {
+    if (!animationActive) return;
+    animationActive = false;
+    if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+    setRouteProgress(1);
+    skipHintEl.hidden = true;
+    document.removeEventListener('keydown', onSkipKeydown);
+    document.removeEventListener('click', finishRouteAnimation);
+  }
+
+  function startRouteAnimation() {
+    if (!routeCoordsFull.length) return;
+    animationActive = true;
+    skipHintEl.hidden = false;
+    var startTime = null;
+
+    function step(timestamp) {
+      if (!animationActive) return;
+      if (startTime === null) startTime = timestamp;
+      var t = Math.min(1, (timestamp - startTime) / ROUTE_ANIMATION_MS);
+      setRouteProgress(t);
+      if (t >= 1) {
+        finishRouteAnimation();
+        return;
+      }
+      animationFrameId = requestAnimationFrame(step);
+    }
+
+    animationFrameId = requestAnimationFrame(step);
+    document.addEventListener('keydown', onSkipKeydown);
+    document.addEventListener('click', finishRouteAnimation);
+  }
+
+  coverStartBtn.addEventListener('click', function () {
+    coverEl.classList.add('is-leaving');
+  });
+
+  // 封面淡出完全結束才開始畫線（而不是同時開始）——但因為地圖早就
+  // 預載好了，淡出後露出的不是空畫面，是已經就緒的靜態全景地圖，
+  // 銜接起來不會有空白停頓的觀感。
+  coverEl.addEventListener('transitionend', function (e) {
+    if (e.target !== coverEl || e.propertyName !== 'opacity') return;
+    coverEl.hidden = true;
+    startRouteAnimation();
   });
 
   // 暴露給後續票使用
