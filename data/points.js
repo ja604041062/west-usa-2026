@@ -11,6 +11,9 @@
 // srcFolder 對應到來源照片資料夾名稱，可以自由命名（中文、空格、編號前綴都可以）。
 // description 留空時，面板不會顯示文字區塊；想寫遊記就直接填在這裡，存檔重新整理即可。
 // date 留空時，面板不會顯示日期。
+// labelOffset 選填：[x, y] 像素，覆寫地名標籤相對於標記的預設位置（預設在標記
+// 右側、垂直置中）。只有在這個地點跟另一個地點距離很近、全景縮放層級下標籤
+// 會疊在一起看不清楚時才需要填，例如下羚羊谷／馬蹄灣這一對。
 
 window.TRIP_POINTS = {
   "photoSourceRoot": "../Soap美西",
@@ -47,6 +50,8 @@ window.TRIP_POINTS = {
       "inRoute": true
     },
     {
+      // 跟馬蹄灣實際車程僅約 10 分鐘，全景縮放層級下兩個標記幾乎重疊，
+      // 標籤往下錯開避免疊在一起（見上方 labelOffset 說明）。
       "id": "lower-antelope-canyon",
       "srcFolder": "3.lower antelope canyon",
       "name": "下羚羊谷",
@@ -54,9 +59,11 @@ window.TRIP_POINTS = {
       "date": "",
       "description": "",
       "showMarker": true,
-      "inRoute": true
+      "inRoute": true,
+      "labelOffset": [18, 14]
     },
     {
+      // 跟下羚羊谷成對錯開，標籤往上偏移。
       "id": "horseshoe-bend",
       "srcFolder": "4.馬蹄灣",
       "name": "馬蹄灣",
@@ -64,7 +71,8 @@ window.TRIP_POINTS = {
       "date": "",
       "description": "",
       "showMarker": true,
-      "inRoute": true
+      "inRoute": true,
+      "labelOffset": [18, -14]
     },
     {
       // 途經點：實際行程是馬蹄灣/羚羊谷折返回大峽谷，再前往拉斯維加斯，

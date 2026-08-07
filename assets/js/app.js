@@ -124,10 +124,15 @@
       riseOnHover: true
     });
 
+    // 標籤預設在標記右側、垂直置中。少數彼此距離很近的地點（例如下羚羊谷
+    // 與馬蹄灣，實際車程僅約 10 分鐘）在全景縮放層級下標記幾乎重疊，
+    // 標籤會疊在一起看不清楚，這種情況由 points.js 的 labelOffset 個別覆寫，
+    // 讓其中一個標籤往上、另一個往下錯開，不需要更動任何程式邏輯。
+    var defaultLabelOffset = [point.inRoute ? 18 : 15, 0];
     marker.bindTooltip(point.name, {
       permanent: true,
       direction: 'right',
-      offset: [point.inRoute ? 18 : 15, 0],
+      offset: point.labelOffset || defaultLabelOffset,
       className: 'trip-label' + (point.inRoute ? '' : ' trip-label--offroute')
     });
 
