@@ -247,8 +247,28 @@
     });
   }
 
+  // 讓地圖上的標記跟著面板同步「目前選到的是哪一點」：放大 + 脈動
+  // 光暈標出來。面板切換／關閉時記得把上一個標記的醒目樣式收掉，
+  // 不然會同時有兩個標記在閃。
+  var activeMarker = null;
+
+  function setActiveMarker(point) {
+    if (activeMarker) {
+      var prevEl = activeMarker.getElement();
+      if (prevEl) L.DomUtil.removeClass(prevEl, 'trip-marker--active');
+    }
+    activeMarker = point
+      ? markers.find(function (m) { return m.tripPoint.id === point.id; })
+      : null;
+    if (activeMarker) {
+      var el = activeMarker.getElement();
+      if (el) L.DomUtil.addClass(el, 'trip-marker--active');
+    }
+  }
+
   function openPanel(point) {
     currentPanelPoint = point;
+    setActiveMarker(point);
 
     panelTitleEl.textContent = point.name;
     setOptionalText(panelDateEl, point.date);
@@ -289,6 +309,8 @@
 
   function closePanel() {
     panelEl.classList.remove('is-open');
+    setActiveMarker(null);
+    currentPanelPoint = null;
   }
 
   panelCloseBtn.addEventListener('click', closePanel);
