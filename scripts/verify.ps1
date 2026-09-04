@@ -342,6 +342,14 @@ Test-That "robots.txt 存在且阻擋索引" {
     Assert-True ($robots -match 'Disallow:\s*/') "robots.txt 未阻擋索引"
 }
 
+Test-That "favicon 存在，且頁面與部署腳本都有帶到" {
+    Assert-True (Test-Path (Join-Path $root 'favicon.svg')) "缺少 favicon.svg"
+    $html = Get-Content -Path (Join-Path $root 'index.html') -Raw -Encoding UTF8
+    Assert-True ($html -match 'rel="icon"[^>]*favicon\.svg') "index.html 沒有連結 favicon.svg"
+    $deployScript = Get-Content -Path (Join-Path $root 'scripts\deploy.ps1') -Raw -Encoding UTF8
+    Assert-True ($deployScript -match 'favicon\.svg') "deploy.ps1 沒有把 favicon.svg 打包進部署 —— 檔案存在但不會真的上線"
+}
+
 Test-That "頁面含 noindex meta 標籤" {
     $html = Get-Content -Path (Join-Path $root 'index.html') -Raw -Encoding UTF8
     Assert-True ($html -match '(?i)<meta[^>]+name\s*=\s*"robots"[^>]+noindex') "缺少 noindex meta 標籤"

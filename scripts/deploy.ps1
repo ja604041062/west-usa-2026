@@ -7,9 +7,9 @@
 #
 # 這支腳本會：
 #   1. 先跑 verify.ps1 —— 資料或照片有問題就直接停止，不會把壞掉的網站送上線
-#   2. 把公開網站需要的檔案（index.html、assets/、data/、photos/、robots.txt）
-#      複製到一個乾淨的暫存資料夾 —— 不會把 .git、SPEC.md、STATUS.md、
-#      .scratch 這些內部文件傳上去
+#   2. 把公開網站需要的檔案（index.html、favicon.svg、assets/、data/、
+#      photos/、robots.txt）複製到一個乾淨的暫存資料夾 —— 不會把
+#      .git、SPEC.md、STATUS.md、.scratch 這些內部文件傳上去
 #   3. 用 wrangler 把那個資料夾整包上傳到 Cloudflare Pages
 #
 # 用法：powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1
@@ -33,8 +33,9 @@ $deployDir = Join-Path $env:TEMP 'west-usa-2026-deploy'
 if (Test-Path $deployDir) { Remove-Item $deployDir -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $deployDir | Out-Null
 
-Copy-Item (Join-Path $root 'index.html')  $deployDir
-Copy-Item (Join-Path $root 'robots.txt')  $deployDir
+Copy-Item (Join-Path $root 'index.html')    $deployDir
+Copy-Item (Join-Path $root 'favicon.svg')   $deployDir
+Copy-Item (Join-Path $root 'robots.txt')    $deployDir
 Copy-Item (Join-Path $root 'assets')      $deployDir -Recurse
 Copy-Item (Join-Path $root 'data')        $deployDir -Recurse
 Copy-Item (Join-Path $root 'photos')      $deployDir -Recurse
