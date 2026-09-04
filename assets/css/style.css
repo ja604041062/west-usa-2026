@@ -280,16 +280,62 @@ html, body {
   gap: .5rem;
 }
 
-.panel__thumb {
-  width: 100%;
-  height: auto;
+/* 每張縮圖／海報都包一層 button，統一 DOM 形狀（照片沒有疊加內容，
+   但用同一種結構，不用為影片另外分岔版面邏輯）。清掉瀏覽器對 button
+   的預設樣式，讓它單純當一個可點擊的容器。 */
+.panel__thumb-wrap {
+  position: relative;
   display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
   border-radius: .25rem;
   background: #eee;              /* 載入前的佔位色 */
-  object-fit: cover;
   cursor: pointer;
+  overflow: hidden;
   /* aspect-ratio 在圖片載入前就先保留版面空間，避免縮圖陸續到位時
      整個照片牆的排版跳動。 */
+}
+
+.panel__thumb {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* 影片縮圖疊加：中央播放鍵（純 CSS 畫三角形，不用圖示字型或圖片） */
+.panel__thumb-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;          /* 疊加層不擋點擊，點擊事件交給外層 button */
+}
+
+.panel__thumb-play::before {
+  content: "";
+  width: 0;
+  height: 0;
+  margin-left: 3px;              /* 三角形視覺置中的微調 */
+  border-style: solid;
+  border-width: 8px 0 8px 13px;
+  border-color: transparent transparent transparent #fff;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .6));
+}
+
+.panel__thumb-duration {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  padding: .0625rem .3125rem;
+  border-radius: .1875rem;
+  background: rgba(0, 0, 0, .72);
+  color: #fff;
+  font-size: .6875rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
 /* ---------------------------------------------------------------- 燈箱 */
@@ -312,9 +358,11 @@ html, body {
   pointer-events: auto;
 }
 
-.lightbox__image {
+.lightbox__image,
+.lightbox__video {
   /* 完整顯示在視窗內，不裁切、不需捲動 —— 用 max-width/max-height
-     而不是固定尺寸，圖片保持原始長寬比自然縮放。 */
+     而不是固定尺寸，內容保持原始長寬比自然縮放。照片和影片共用
+     同一組尺寸規則，切換時不會有跳動感。 */
   max-width: 90vw;
   max-height: 86vh;
   object-fit: contain;

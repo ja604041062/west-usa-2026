@@ -177,26 +177,57 @@
     }
   }
 
+  // 7.4 -> "0:07"，面板縮圖上的時長標籤用。
+  function formatDuration(seconds) {
+    var total = Math.round(seconds || 0);
+    var m = Math.floor(total / 60);
+    var s = total % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
   function renderPhotoGrid(pointId, pointName) {
     panelGridEl.innerHTML = '';
     var photos = (window.TRIP_PHOTOS && window.TRIP_PHOTOS[pointId]) || [];
 
-    // 燈箱要能在同一個地點的照片之間左右翻頁，所以把這個地點目前的
-    // 照片清單記在面板層級 —— 點哪張縮圖，燈箱就從哪個 index 開始。
+    // 燈箱要能在同一個地點的照片／影片之間左右翻頁，所以把這個地點
+    // 目前的清單記在面板層級 —— 點哪一項，燈箱就從哪個 index 開始。
     lightboxPhotos = photos;
     lightboxPointName = pointName;
 
     photos.forEach(function (photo, index) {
+      var isVideo = photo.type === 'video';
+
+      // 每一項（照片或影片）都包一層 <button>：影片需要疊播放鍵和
+      // 時長標籤，照片沒有疊加內容但用同一種結構，DOM 形狀一致、
+      // 版面計算（aspect-ratio 佔位）不用分兩套邏輯。
+      var wrap = document.createElement('button');
+      wrap.type = 'button';
+      wrap.className = 'panel__thumb-wrap';
+      // 縮圖還沒載入前就先用原始尺寸的長寬比佔好版面空間，
+      // 照片／影片陸續進來時面板不會跳動。
+      wrap.style.aspectRatio = photo.w + ' / ' + photo.h;
+      wrap.addEventListener('click', function () { openLightbox(index); });
+
       var img = document.createElement('img');
       img.className = 'panel__thumb';
       img.src = photo.thumb;
-      img.alt = pointName + ' 照片 ' + (index + 1);
+      img.alt = pointName + (isVideo ? ' 影片 ' : ' 照片 ') + (index + 1);
       img.loading = 'lazy';
-      // 縮圖還沒載入前就先用原始尺寸的長寬比佔好版面空間，
-      // 照片陸續進來時面板不會跳動。
-      img.style.aspectRatio = photo.w + ' / ' + photo.h;
-      img.addEventListener('click', function () { openLightbox(index); });
-      panelGridEl.appendChild(img);
+      wrap.appendChild(img);
+
+      if (isVideo) {
+        var play = document.createElement('span');
+        play.className = 'panel__thumb-play';
+        play.setAttribute('aria-hidden', 'true');
+        wrap.appendChild(play);
+
+        var badge = document.createElement('span');
+        badge.className = 'panel__thumb-duration';
+        badge.textContent = formatDuration(photo.duration);
+        wrap.appendChild(badge);
+      }
+
+      panelGridEl.appendChild(wrap);
     });
   }
 
@@ -222,6 +253,7 @@
   // 什麼樣」的細看（大圖）。大圖只在真的點開某一張時才載入。
   var lightboxEl = document.getElementById('lightbox');
   var lightboxImg = lightboxEl.querySelector('.lightbox__image');
+  var lightboxVideo = lightboxEl.querySelector('.lightbox__video');
   var lightboxCounter = lightboxEl.querySelector('.lightbox__counter');
   var lightboxCloseBtn = lightboxEl.querySelector('.lightbox__close');
   var lightboxPrevBtn = lightboxEl.querySelector('.lightbox__nav--prev');
@@ -231,33 +263,57 @@
   var lightboxPointName = '';
   var lightboxIndex = 0;
 
-  function renderLightboxImage() {
-    var photo = lightboxPhotos[lightboxIndex];
-    lightboxImg.src = photo.large;
-    lightboxImg.alt = lightboxPointName + ' 照片 ' + (lightboxIndex + 1);
+  // 停掉影片播放並釋放它的來源 —— 切到下一項或關閉燈箱時都要呼叫，
+  // 不然背景會繼續播放聲音、或瀏覽器繼續緩衝看不見的影片。
+  function stopLightboxVideo() {
+    lightboxVideo.pause();
+    lightboxVideo.removeAttribute('src');
+    lightboxVideo.load();
+  }
+
+  function renderLightboxItem() {
+    var item = lightboxPhotos[lightboxIndex];
+    var isVideo = item.type === 'video';
+
+    stopLightboxVideo();
+
+    if (isVideo) {
+      lightboxImg.hidden = true;
+      lightboxVideo.hidden = false;
+      lightboxVideo.poster = item.thumb;
+      lightboxVideo.src = item.video;
+    } else {
+      lightboxVideo.hidden = true;
+      lightboxImg.hidden = false;
+      lightboxImg.src = item.large;
+      lightboxImg.alt = lightboxPointName + ' 照片 ' + (lightboxIndex + 1);
+    }
+
     lightboxCounter.textContent = (lightboxIndex + 1) + ' / ' + lightboxPhotos.length;
   }
 
   function openLightbox(index) {
     lightboxIndex = index;
-    renderLightboxImage();
+    renderLightboxItem();
     lightboxEl.classList.add('is-open');
   }
 
   function closeLightbox() {
+    stopLightboxVideo();
     lightboxEl.classList.remove('is-open');
   }
 
   // 首張往前、末張往後都直接繞到另一端，而不是停在原地或讓按鈕失效 ——
-  // 使用者連續按下一張時最不會撞到邊界的行為。
+  // 使用者連續按下一張時最不會撞到邊界的行為。照片、影片混排在同一個
+  // 清單裡，翻頁邏輯不用區分正在看的是哪一種。
   function showPrevPhoto() {
     lightboxIndex = (lightboxIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length;
-    renderLightboxImage();
+    renderLightboxItem();
   }
 
   function showNextPhoto() {
     lightboxIndex = (lightboxIndex + 1) % lightboxPhotos.length;
-    renderLightboxImage();
+    renderLightboxItem();
   }
 
   lightboxCloseBtn.addEventListener('click', closeLightbox);

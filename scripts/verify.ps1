@@ -99,7 +99,7 @@ Test-That "孤兒偵測：來源目錄下沒有未被對應的資料夾" {
     if (-not (Test-Path $srcRoot)) { throw "來源目錄不存在：$srcRoot" }
     $mapped = $points | Where-Object { $_.srcFolder } | ForEach-Object { $_.srcFolder }
     $actual = Get-ChildItem -Path $srcRoot -Directory | Where-Object { $_.Name -ne '_unsorted' }
-    $orphans = $actual | Where-Object { $mapped -notcontains $_.Name }
+    $orphans = @($actual | Where-Object { $mapped -notcontains $_.Name })
     Assert-True ($orphans.Count -eq 0) "孤兒資料夾（照片不會出現在網站上）：$($orphans.Name -join ', ')"
 }
 
@@ -124,41 +124,61 @@ Test-That "photos.js 存在" {
 if ($photosExist) {
     $photos = Read-DataFile $photosPath
 
-    Test-That "完整性：每個地點的張數與來源資料夾相符" {
+    Test-That "完整性：每個地點的照片／影片張數與來源資料夾相符" {
         foreach ($p in $points) {
             if ([string]::IsNullOrEmpty($p.srcFolder)) { continue }
-            $srcCount = (Get-ChildItem -Path (Join-Path $srcRoot $p.srcFolder) -File -Include *.jpg,*.jpeg,*.JPG,*.JPEG -Recurse).Count
-            $outCount = 0
-            if ($photos.PSObject.Properties[$p.id]) { $outCount = $photos.($p.id).Count }
-            Assert-True ($srcCount -eq $outCount) "地點 '$($p.id)' 來源 $srcCount 張，輸出 $outCount 張"
+            # @(...) 包住強制成陣列 —— 剛好只有 0 或 1 個符合項目時，
+            # PowerShell 的管線會把結果「攤平」成單一物件或 $null，
+            # 這種物件沒有 .Count 屬性，讀出來是空字串而不是 0 或 1。
+            # 這個坑之前沒踩到是因為照片數量一直是好幾張，直到某些
+            # 地點剛好只有 1 支影片才浮現。
+            $srcDirPath = Join-Path $srcRoot $p.srcFolder
+            $srcPhotoCount = @(Get-ChildItem -Path $srcDirPath -File -Include *.jpg,*.jpeg,*.JPG,*.JPEG -Recurse).Count
+            $srcVideoCount = @(Get-ChildItem -Path $srcDirPath -File -Include *.mp4,*.MP4,*.mov,*.MOV -Recurse).Count
+
+            $outPhotoCount = 0
+            $outVideoCount = 0
+            if ($photos.PSObject.Properties[$p.id]) {
+                $outPhotoCount = @($photos.($p.id) | Where-Object { $_.type -eq 'photo' }).Count
+                $outVideoCount = @($photos.($p.id) | Where-Object { $_.type -eq 'video' }).Count
+            }
+            Assert-True ($srcPhotoCount -eq $outPhotoCount) "地點 '$($p.id)' 來源 $srcPhotoCount 張照片，輸出 $outPhotoCount 張"
+            Assert-True ($srcVideoCount -eq $outVideoCount) "地點 '$($p.id)' 來源 $srcVideoCount 支影片，輸出 $outVideoCount 支"
         }
     }
 
-    Test-That "總張數非零，且與所有地點加總一致" {
-        # 照片數量會持續增加（撰寫這支腳本時是 108 張，之後只會更多），
-        # 不寫死確切數字 —— 上面「完整性」那項測試已經逐地點比對過
-        # 來源與輸出是否相符，這裡只做總數健全性檢查，並把目前的
-        # 實際張數印出來供參考。
+    Test-That "總項數非零，且與所有地點加總一致" {
+        # 照片／影片數量會持續增加，不寫死確切數字 —— 上面「完整性」
+        # 那項測試已經逐地點比對過來源與輸出是否相符，這裡只做總數
+        # 健全性檢查，並把目前的實際數量印出來供參考。
         $total = 0
-        foreach ($prop in $photos.PSObject.Properties) { $total += $prop.Value.Count }
-        Write-Host "        （目前共 $total 張照片）" -ForegroundColor DarkGray
-        Assert-True ($total -gt 0) "總張數為 0，照片管線可能沒有正確執行"
+        $totalVideos = 0
+        foreach ($prop in $photos.PSObject.Properties) {
+            $total += $prop.Value.Count
+            $totalVideos += @($prop.Value | Where-Object { $_.type -eq 'video' }).Count
+        }
+        Write-Host "        （目前共 $total 項，其中 $totalVideos 支影片）" -ForegroundColor DarkGray
+        Assert-True ($total -gt 0) "總項數為 0，照片管線可能沒有正確執行"
     }
 
     Test-That "產物存在性：每個引用的檔案都在磁碟上" {
         foreach ($prop in $photos.PSObject.Properties) {
             foreach ($ph in $prop.Value) {
                 Assert-True (Test-Path (Join-Path $root $ph.thumb)) "縮圖不存在：$($ph.thumb)"
-                Assert-True (Test-Path (Join-Path $root $ph.large)) "大圖不存在：$($ph.large)"
+                if ($ph.type -eq 'video') {
+                    Assert-True (Test-Path (Join-Path $root $ph.video)) "影片不存在：$($ph.video)"
+                } else {
+                    Assert-True (Test-Path (Join-Path $root $ph.large)) "大圖不存在：$($ph.large)"
+                }
             }
         }
     }
 
-    Test-That "尺寸正確性：縮圖 600px、大圖 2000px，長寬比一致" {
+    Test-That "尺寸正確性：縮圖 600px、大圖 2000px，長寬比一致（僅照片）" {
         Add-Type -AssemblyName System.Drawing
         $checked = 0
         foreach ($prop in $photos.PSObject.Properties) {
-            foreach ($ph in $prop.Value) {
+            foreach ($ph in ($prop.Value | Where-Object { $_.type -ne 'video' })) {
                 if ($checked -ge 12) { break }
                 $t = [System.Drawing.Image]::FromFile((Join-Path $root $ph.thumb))
                 $l = [System.Drawing.Image]::FromFile((Join-Path $root $ph.large))
@@ -175,18 +195,51 @@ if ($photosExist) {
         Assert-True ($checked -gt 0) "沒有可檢查的圖片"
     }
 
-    Test-That "大小預算：輸出低於 60MB" {
+    Test-That "影片海報縮圖寬度為 600px" {
+        Add-Type -AssemblyName System.Drawing
+        $checked = 0
+        foreach ($prop in $photos.PSObject.Properties) {
+            foreach ($ph in ($prop.Value | Where-Object { $_.type -eq 'video' })) {
+                $t = [System.Drawing.Image]::FromFile((Join-Path $root $ph.thumb))
+                try {
+                    Assert-True ($t.Width -eq 600) "影片海報寬度為 $($t.Width)，預期 600：$($ph.thumb)"
+                } finally { $t.Dispose() }
+                $checked++
+            }
+        }
+        if ($checked -eq 0) { return 'skip' }
+    }
+
+    Test-That "影片檔案大小低於安全門檻（Cloudflare Pages 單檔上限 25MB）" {
+        $checked = 0
+        foreach ($prop in $photos.PSObject.Properties) {
+            foreach ($ph in ($prop.Value | Where-Object { $_.type -eq 'video' })) {
+                $sizeMB = [math]::Round((Get-Item (Join-Path $root $ph.video)).Length / 1MB, 1)
+                Assert-True ($sizeMB -lt 20) "影片 ${sizeMB}MB，超過 20MB 安全門檻：$($ph.video)"
+                $checked++
+            }
+        }
+        if ($checked -eq 0) { return 'skip' }
+    }
+
+    Test-That "大小預算：輸出低於 150MB" {
+        # 加入影片後預算跟著調高。照片時代量測的預期值約 50MB，
+        # 加了幾支短影片後實測約 77MB；150MB 留了一倍以上的餘裕，
+        # 而不是逐次微調湊剛好，這樣照片影片再增加一些也不會誤報。
         $photoDir = Join-Path $root 'photos'
         $bytes = (Get-ChildItem -Path $photoDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
         $mb = [math]::Round($bytes / 1MB, 1)
         Write-Host "        （實際 ${mb}MB）" -ForegroundColor DarkGray
-        Assert-True ($mb -lt 60) "輸出為 ${mb}MB，超過 60MB 預算"
+        Assert-True ($mb -lt 150) "輸出為 ${mb}MB，超過 150MB 預算"
     }
 
-    Test-That "每張照片都帶有原始尺寸（供版面預留用）" {
+    Test-That "每項都帶有必要的中繼資料（照片原始尺寸／影片時長）" {
         foreach ($prop in $photos.PSObject.Properties) {
             foreach ($ph in $prop.Value) {
-                Assert-True ($ph.w -gt 0 -and $ph.h -gt 0) "照片缺少尺寸資訊：$($ph.thumb)"
+                Assert-True ($ph.w -gt 0 -and $ph.h -gt 0) "缺少尺寸資訊：$($ph.thumb)"
+                if ($ph.type -eq 'video') {
+                    Assert-True ($ph.duration -gt 0) "影片缺少時長資訊：$($ph.video)"
+                }
             }
         }
     }
