@@ -253,6 +253,37 @@ html, body {
   font-weight: 700;
 }
 
+/* 上一站／下一站：不用關掉面板回地圖點別的標記，直接在面板裡前後
+   移動。順序跟地圖初始視野、標記編號用的是同一份 points.js 陣列
+   順序，逛起來跟地圖上看到的行程順序一致。 */
+.panel__stepper {
+  display: flex;
+  gap: .5rem;
+  margin: 0 0 1rem;
+}
+
+.panel__stepper-btn {
+  flex: 1;
+  border: none;
+  background: rgba(0, 0, 0, .05);
+  color: var(--ink);
+  font-size: .8125rem;
+  font-weight: 600;
+  padding: .4375rem .75rem;
+  border-radius: 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel__stepper-prev { text-align: left; }
+.panel__stepper-next { text-align: right; }
+
+.panel__stepper-btn:hover {
+  background: rgba(0, 0, 0, .1);
+}
+
 .panel__date {
   margin: 0 0 .75rem;
   font-size: .875rem;

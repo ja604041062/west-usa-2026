@@ -171,6 +171,15 @@
   var panelGridEl = panelEl.querySelector('.panel__grid');
   var panelScrollEl = panelEl.querySelector('.panel__scroll');
   var panelCloseBtn = panelEl.querySelector('.panel__close');
+  var panelPrevBtn = panelEl.querySelector('.panel__stepper-prev');
+  var panelNextBtn = panelEl.querySelector('.panel__stepper-next');
+
+  // 上一站／下一站要在的清單，就是地圖上看得到標記的地點，順序照
+  // points.js 陣列順序 —— 跟標記編號、初始視野用的是同一份順序，
+  // 逛起來跟地圖上的行程順序一致（含 Napa Valley，它一樣是可以
+  // 點開看照片的地點，只是不算在自駕路線上）。
+  var stepPoints = POINTS.filter(function (p) { return p.showMarker; });
+  var currentPanelPoint = null;
 
   // 文字欄位為空時整個隱藏，而不是留一段空白 —— 現階段所有 description
   // 都是空的，這條路徑要能撐住「純照片牆」的樣子。
@@ -239,14 +248,44 @@
   }
 
   function openPanel(point) {
+    currentPanelPoint = point;
+
     panelTitleEl.textContent = point.name;
     setOptionalText(panelDateEl, point.date);
     setOptionalText(panelDescEl, point.description);
     renderPhotoGrid(point.id, point.name);
 
+    var idx = stepPoints.indexOf(point);
+    if (idx !== -1) {
+      // 按鈕上直接顯示目的地名稱（不是死板的「上一站」四個字），
+      // 使用者不用先點下去才知道要去哪 —— 首尾繞回跟燈箱的邏輯一致。
+      var prevPoint = stepPoints[(idx - 1 + stepPoints.length) % stepPoints.length];
+      var nextPoint = stepPoints[(idx + 1) % stepPoints.length];
+      panelPrevBtn.textContent = '‹ ' + prevPoint.name;
+      panelNextBtn.textContent = nextPoint.name + ' ›';
+      panelPrevBtn.hidden = false;
+      panelNextBtn.hidden = false;
+    } else {
+      // 理論上不會發生（面板只會被地圖上的標記打開，一定在
+      // stepPoints 裡），保留這條路徑純粹是防禦性寫法。
+      panelPrevBtn.hidden = true;
+      panelNextBtn.hidden = true;
+    }
+
     panelScrollEl.scrollTop = 0;
     panelEl.classList.add('is-open');
   }
+
+  function stepPanel(direction) {
+    if (!currentPanelPoint) return;
+    var idx = stepPoints.indexOf(currentPanelPoint);
+    if (idx === -1) return;
+    var target = stepPoints[(idx + direction + stepPoints.length) % stepPoints.length];
+    openPanel(target);
+  }
+
+  panelPrevBtn.addEventListener('click', function () { stepPanel(-1); });
+  panelNextBtn.addEventListener('click', function () { stepPanel(1); });
 
   function closePanel() {
     panelEl.classList.remove('is-open');
