@@ -9,15 +9,22 @@
 
   // -------------------------------------------------------------- 地圖底圖
 
+  // 淡色標準地圖原本用 CARTO Positron，這段期間 CARTO 改了免費方案的
+  // 政策，圖磚變成整片「API KEY REQUIRED」浮水印。換成 Esri 的淡灰底圖
+  // ——跟下面的衛星圖同一家服務，已知不需要金鑰。Esri 這個風格是兩層
+  // 疊起來的：Light_Gray_Base 只有底色沒有文字，Light_Gray_Reference
+  // 是疊在上面、透明背景的地名層，兩層都要有才等同原本 CARTO 的效果。
   var basemaps = {
-    light: L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 19
-      }
-    ),
+    light: L.layerGroup([
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+        { attribution: 'Tiles &copy; Esri', maxZoom: 16 }
+      ),
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+        { attribution: 'Tiles &copy; Esri', maxZoom: 16 }
+      )
+    ]),
     satellite: L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
